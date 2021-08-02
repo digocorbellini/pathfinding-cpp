@@ -4,9 +4,9 @@
 class Grid
 {
 private:
-	int **gridArr;
-	int gridWidth;
-	int gridHeight;
+	int **gridArr; // the grid
+	int gridWidth; // the width of the grid
+	int gridHeight; // the height of the grid
 	int gridSize; // in pixels
 
 public:
@@ -17,7 +17,12 @@ public:
 	~Grid();
 };
 
-
+/// <summary>
+/// Create an instance of a grid
+/// </summary>
+/// <param name="width">the width of the grid</param>
+/// <param name="height">the height of the grid</param>
+/// <param name="gridSize">the size of each grid square in pixels</param>
 Grid::Grid(int width, int height, int gridSize)
 {
 	this->gridSize = gridSize;
@@ -34,7 +39,12 @@ Grid::Grid(int width, int height, int gridSize)
 	this->gridSize = gridSize;
 }
 
-// get the value at the given grid coordinates
+/// <summary>
+/// Get the value at the given grid coordinates
+/// </summary>
+/// <param name="x">the row cooridnate</param>
+/// <param name="y">the column coordinate</param>
+/// <returns>the value at the given grid coordinates</returns>
 int Grid::getValueAt(int x, int y)
 {
 	if (x < gridWidth && y < gridHeight)
@@ -45,6 +55,9 @@ int Grid::getValueAt(int x, int y)
 	return -1;
 }
 
+/// <summary>
+/// Destructor for a grid object
+/// </summary>
 Grid::~Grid()
 {
 	for (int i = 0; i < gridWidth; i++)
@@ -54,5 +67,6 @@ Grid::~Grid()
 
 	delete gridArr;
 }
+
 #endif GRID_H
 

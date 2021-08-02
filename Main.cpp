@@ -20,6 +20,7 @@ int main()
 
 	Grid grid(windowWidth / gridSize, windowHeight / gridSize, gridSize);
 	Grid *grid2 = new Grid(5, 10, 3);
+
 	delete(grid2);
 
 	// insert logic in here
