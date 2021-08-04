@@ -4,7 +4,9 @@
 #include <SFML/Graphics.hpp>
 #include "GridCellStates.hpp"
 #include "math.h"
+#include <stdio.h>
 
+using namespace std;
 using namespace sf;
 
 class Grid
@@ -15,6 +17,9 @@ private:
 	int gridHeight; // the height of the grid
 	int cellSize; // in pixels
 	int outlineThickness; // in pixels
+
+	Vector2i *startPos;
+	Vector2i *destPos;
 
 public:
 	Grid(int width, int height, int cellSize);
@@ -87,6 +92,9 @@ Grid::Grid(int width, int height, int cellSize)
 	gridHeight = height;
 	this->cellSize = cellSize;
 	outlineThickness = 1;
+
+	startPos = NULL;
+	destPos = NULL;
 }
 
 /// <summary>
@@ -110,6 +118,9 @@ Grid::Grid(int width, int height, int cellSize, int outlineThickness)
 	gridHeight = height;
 	this->cellSize = cellSize;
 	this->outlineThickness = outlineThickness;
+
+	startPos = NULL;
+	destPos = NULL;
 }
 
 /// <summary>
@@ -196,7 +207,62 @@ bool Grid::setValAt(int x, int y, GridValue val)
 {
 	if (validCoords(x, y))
 	{
+		// only allow one start and dest cell
+		if (val == GridValue::START)
+		{
+			// set old start to unoccupied
+			if (startPos == NULL)
+			{
+				startPos = new Vector2i(x, y);
+			}
+			else
+			{
+				// unoccupy old start pos
+				gridArr[startPos->x][startPos->y] = GridValue::UNOCCUPIED;
+
+				// set new start pos
+				startPos->x = x;
+				startPos->y = y;
+			}
+		}
+		else if (val == GridValue::DESTINATION)
+		{
+			// set old dest to unoccupied
+			if (destPos == NULL)
+			{
+				destPos = new Vector2i(x, y);
+			}
+			else
+			{
+				// unoccupy old dest pos
+				gridArr[destPos->x][destPos->y] = GridValue::UNOCCUPIED;
+
+				// set new dest pos
+				destPos->x = x;
+				destPos->y = y;
+			}
+		}
+		else
+		{
+			// make sure that dest/start are removed if the cell is overwritten 
+			GridValue currVal = getValueAt(x, y);
+			if (startPos != NULL && currVal == GridValue::START)
+			{
+				// remove start pos
+				delete(startPos);
+				startPos = NULL;
+			}
+			else if (destPos != NULL && currVal == GridValue::DESTINATION)
+			{
+				// remove destination pos
+				delete(destPos);
+				destPos = NULL;
+			}
+		}
+
+		// set the value at the cell
 		gridArr[x][y] = val;
+
 		return true;
 	}
 
@@ -213,12 +279,7 @@ bool Grid::setValAt(int x, int y, GridValue val)
 bool Grid::setValAt(Vector2i pos, GridValue val)
 {
 	Vector2i gridCoords(screenToGrid(pos));
-	if (validCoords(gridCoords.x, gridCoords.y))
-	{
-		gridArr[gridCoords.x][gridCoords.y] = val;
-		return true;
-	}
-	return false;
+	return setValAt(gridCoords.x, gridCoords.y, val);
 }
 
 /// <summary>
@@ -226,12 +287,26 @@ bool Grid::setValAt(Vector2i pos, GridValue val)
 /// </summary>
 Grid::~Grid()
 {
+	cout << "startPos == null: " << (startPos == NULL) << endl;
+	cout << "destPos == null: " << (destPos == NULL) << endl;
+
+	// free the grid array
 	for (int i = 0; i < gridWidth; i++)
 	{
 		delete gridArr[i];
 	}
 
 	delete gridArr;
+
+	// free the start and dest positions
+	if (startPos != NULL)
+	{
+		delete(startPos);
+	}
+	if (destPos != NULL)
+	{
+		delete(destPos);
+	}
 }
 
 #endif

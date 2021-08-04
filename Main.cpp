@@ -14,6 +14,9 @@ Grid *grid;
 
 Vector2f selectedGridPos = Vector2f(0, 0);
 
+/// <summary>
+/// Handle the logic for the player cursor on the grid
+/// </summary>
 void playerCursor()
 {
 	// get mouse position
@@ -28,6 +31,9 @@ void playerCursor()
 	window->draw(selectedSquare);
 }
 
+/// <summary>
+/// Handle the player's ability to color the grid
+/// </summary>
 void playerController()
 {
 	// get mouse position
@@ -54,8 +60,7 @@ void playerController()
 		// place destination cell
 		grid->setValAt(mousePos, GridValue::DESTINATION);
 	}
-	else if (Mouse::isButtonPressed(Mouse::Button::Middle) 
-			|| Keyboard::isKeyPressed(Keyboard::Key::Space))
+	else if (Mouse::isButtonPressed(Mouse::Button::Middle) || Keyboard::isKeyPressed(Keyboard::Key::Space))
 	{
 		// middle mouse button
 		// place starting cell
@@ -98,4 +103,6 @@ int main()
 		// display window
 		window->display();
 	}
+
+	delete(grid);
 }
