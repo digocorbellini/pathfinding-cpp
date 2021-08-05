@@ -5,6 +5,7 @@
 #include "GridCellStates.hpp"
 #include "math.h"
 #include <stdio.h>
+#include <vector>
 
 using namespace std;
 using namespace sf;
@@ -40,9 +41,55 @@ public:
 	int getGridHeight();
 
 	bool validCoords(int x, int y);
+
+	vector<T*> *getNeighbours(int x, int y);
 	
 	~Grid();
 };
+
+/// <summary>
+/// Get a list of all of the neighbouring cells around the given
+/// grid coordinates
+/// </summary>
+/// <param name="x">the x coordinate of a cell in the grid</param>
+/// <param name="y">the x coordinate of a cellin the grid</param>
+/// <returns>a list of all of the neighbouring cells around the given
+/// grid coordinates if the coordinates are valid and null otherwise</returns>
+template <typename T>
+vector<T*> *Grid<T>::getNeighbours(int x, int y)
+{
+	// check for invalid coords
+	if (!validCoords(x, y))
+	{
+		return NULL;
+	}
+
+	// create a list to store the neighbouring cells
+	vector<T*>* neighbours = new vector<T*>();
+
+	// find all neighbours around given coordinates
+	for (int relativeX = -1; relativeX < 2; relativeX++)
+	{
+		for (int relativeY = -1; relativeY < 2; relativeY++)
+		{
+			// skip the center cell
+			if (x == 0 && y == 0)
+			{
+				continue;
+			}
+
+			int currX = x + relativeX;
+			int currY = y + relativeY;
+			// add neighbouring cell if it exists in the grid
+			if (validCoords(currX, currY))
+			{
+				neighbours->push_back(getValueAt(currX, currY));
+			}
+		}
+	}
+
+	return neighbours;
+}
 
 /// <summary>
 /// Get the grid's height
@@ -115,8 +162,8 @@ Grid<T>::Grid(int width, int height, int cellSize)
 /// <summary>
 /// Get the value at the given grid coordinates
 /// </summary>
-/// <param name="x">the row cooridnate</param>
-/// <param name="y">the column coordinate</param>
+/// <param name="relativeX">the row cooridnate</param>
+/// <param name="relativeY">the column coordinate</param>
 /// <returns>if the coordinates are valid, returns the value at the given grid 
 /// coordinates, and returns false otherwise</returns>
 template <typename T>
@@ -133,8 +180,8 @@ T *Grid<T>::getValueAt(int x, int y)
 /// <summary>
 /// Convert the grid position to a screen position
 /// </summary>
-/// <param name="x">the x coordinate of the desired grid space</param>
-/// <param name="y">the y coordinate of the dedired grid space</param>
+/// <param name="relativeX">the relativeX coordinate of the desired grid space</param>
+/// <param name="relativeY">the relativeY coordinate of the dedired grid space</param>
 /// <returns>a screen position in pixels as a Vector2f of the given cell
 /// in the grid if the given coordinates are valid, otherwise returns NULL</returns>
 template <typename T>
@@ -163,8 +210,8 @@ Vector2i Grid<T>::screenToGrid(Vector2i pos)
 /// <summary>
 /// Check to see if the given grid coordinates are valid
 /// </summary>
-/// <param name="x">the x coordinate of the desired cell</param>
-/// <param name="y"the y coordinate of the desired cell></param>
+/// <param name="relativeX">the relativeX coordinate of the desired cell</param>
+/// <param name="relativeY"the relativeY coordinate of the desired cell></param>
 /// <returns>true if the cell is valid and false otherwise</returns>
 template <typename T>
 bool Grid<T>::validCoords(int x, int y)
@@ -175,8 +222,8 @@ bool Grid<T>::validCoords(int x, int y)
 /// <summary>
 /// Set the value of the cell at the given coordinates
 /// </summary>
-/// <param name="x">the x coordinate of the cell</param>
-/// <param name="y">the y coordinate of the cell</param>
+/// <param name="relativeX">the relativeX coordinate of the cell</param>
+/// <param name="relativeY">the relativeY coordinate of the cell</param>
 /// <param name="val">the new value of the given cell</param>
 /// <returns>true if the cell is valid and false otherwise</returns>
 template <typename T>

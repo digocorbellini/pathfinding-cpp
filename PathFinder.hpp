@@ -5,6 +5,8 @@
 #include "SFML/Graphics.hpp"
 #include "Grid.hpp"
 #include "GridCellStates.hpp"
+#include <vector>
+#include <unordered_set>
 
 using namespace std;
 using namespace sf;
@@ -18,7 +20,16 @@ public:
 	// node for each grid position
 	struct GridNode
 	{
-		GridValue val;
+		GridValue val; // value of this node
+		Vector2i gridPos; // position of this node in the grid
+		GridNode *parentNode; // node that came before this node in the path
+		int gCost; // distance from starting node
+		int hCost; // distance from end node
+
+		int fCost()
+		{
+			return gCost + hCost;
+		}
 	};
 
 private:
@@ -28,6 +39,17 @@ private:
 
 	Vector2i* startPos;
 	Vector2i* endPos;
+
+	// custom hashing for GridNodes
+	struct NodeHash
+	{
+		size_t operator()(const GridNode& node) const
+		{
+			return node.gCost + node.hCost + (int)node.val;
+		}
+	};
+
+	int getDistance(GridNode* node1, GridNode* node2);
 
 public:
 	PathFinder(int width, int height, int cellSize);
@@ -44,6 +66,8 @@ public:
 
 	bool setValAt(Vector2i pos, GridValue val);
 
+	GridNode* getShortestPath();
+
 private:
 	void initializeNodes();
 
@@ -58,7 +82,9 @@ void PathFinder::initializeNodes()
 	{
 		for (int y = 0; y < grid->getGridHeight(); y++)
 		{
-			grid->setValAt(x, y, new GridNode());
+			GridNode* newNode = new GridNode();
+			newNode->gridPos = Vector2i(x, y);
+			grid->setValAt(x, y, newNode);
 		}
 	}
 }
@@ -246,6 +272,67 @@ bool PathFinder::setValAt(Vector2i pos, GridValue val)
 	return setValAt(gridPos.x, gridPos.y, val);
 }
 
+int PathFinder::getDistance(GridNode* node1, GridNode* node2)
+{
+	int xDist = abs(node1->gridPos.x - node2->gridPos.x);
+	int yDist = abs(node1->gridPos.y - node2->gridPos.y);
+
+	int numOfDiagonals = min(xDist, yDist);
+	int numOfRegMoves = abs(xDist - yDist);
+}
+
+PathFinder::GridNode* PathFinder::getShortestPath()
+{
+	GridNode* startNode = grid->getValueAt(startPos->x, startPos->y);
+	GridNode* endNode = grid->getValueAt(endPos->x, endPos->y);
+
+	vector<GridNode*> openList;
+	unordered_set<GridNode*, NodeHash> closedSet;
+
+	openList.push_back(startNode);
+
+	while (openList.size() > 0)
+	{
+		// find node with lowest fcost or lowest hcost if fcost are the same
+		GridNode* lowestCostNode = openList[0];
+		int pos = 0;
+		for (int i = 1; i < openList.size(); i++)
+		{
+			GridNode* currNode = openList[i];
+			if (currNode->fCost() < lowestCostNode->fCost()
+					|| (currNode->fCost() == lowestCostNode->fCost()
+					&& currNode->hCost <= lowestCostNode->hCost))
+			{
+				lowestCostNode = currNode;
+				pos = i;
+			}
+		}
+
+		// remove lowest cost node from open list
+		vector<GridNode*>::iterator it = openList.begin() + pos;
+		openList.erase(it);
+		// add lowest cost node to closed set
+		closedSet.insert(lowestCostNode);
+
+		Vector2i lowestCostPos = lowestCostNode->gridPos;
+		vector<GridNode*>* neighbours = grid->getNeighbours(lowestCostPos.x, lowestCostPos.y);
+		for (int i = 0; i < neighbours->size(); i++)
+		{
+			GridNode* currNode = (*neighbours)[i];
+
+			if (currNode->val == GridValue::OCCUPIED
+				|| closedSet.find(currNode) != closedSet.end())
+			{
+				// go to next neighbour if this node is either occupied
+				// or is in the closed set
+				continue;
+			}
+
+
+		}
+
+	}
+}
 
 
 #endif // !PATH_FINDER_H
