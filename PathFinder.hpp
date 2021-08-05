@@ -7,6 +7,7 @@
 #include "GridCellStates.hpp"
 #include <vector>
 #include <unordered_set>
+#include <algorithm>
 
 using namespace std;
 using namespace sf;
@@ -30,6 +31,27 @@ public:
 		{
 			return gCost + hCost;
 		}
+
+		// override equals operator
+		bool operator == (const GridNode& other) const
+		{
+			return gridPos == other.gridPos;
+		}
+
+		// override not equals operator
+		bool operator != (const GridNode& other) const
+		{
+			return gridPos != other.gridPos;
+		}
+	};
+
+	// custom hashing for GridNodes
+	struct NodeHash
+	{
+		size_t operator() (const GridNode* node) const
+		{
+			return node->gCost + node->hCost + (int)node->val;
+		}
 	};
 
 private:
@@ -39,15 +61,6 @@ private:
 
 	Vector2i* startPos;
 	Vector2i* endPos;
-
-	// custom hashing for GridNodes
-	struct NodeHash
-	{
-		size_t operator()(const GridNode& node) const
-		{
-			return node.gCost + node.hCost + (int)node.val;
-		}
-	};
 
 	int getDistance(GridNode* node1, GridNode* node2);
 
@@ -66,11 +79,14 @@ public:
 
 	bool setValAt(Vector2i pos, GridValue val);
 
-	GridNode* getShortestPath();
+	vector<GridNode *> *getShortestPath();
+
+	bool drawShortestPath(RenderWindow* window);
 
 private:
 	void initializeNodes();
 
+	vector<GridNode*> *retracePath(GridNode* startNode, GridNode* endNode);
 };
 
 /// <summary>
@@ -272,17 +288,65 @@ bool PathFinder::setValAt(Vector2i pos, GridValue val)
 	return setValAt(gridPos.x, gridPos.y, val);
 }
 
+/// <summary>
+/// Find the distance between two nodes. Distance is given as a cost
+/// </summary>
+/// <param name="node1">a grid node</param>
+/// <param name="node2">a grid onde</param>
+/// <returns>the distance between two nodes given as a cost</returns>
 int PathFinder::getDistance(GridNode* node1, GridNode* node2)
 {
+	// cost of moves
+	const int DIAGONAL_COST = 14;
+	const int NORMAL_COST = 10;
+
+	// distance between the two nodes
 	int xDist = abs(node1->gridPos.x - node2->gridPos.x);
 	int yDist = abs(node1->gridPos.y - node2->gridPos.y);
 
+	// find the number of diagonal and normal moves
 	int numOfDiagonals = min(xDist, yDist);
-	int numOfRegMoves = abs(xDist - yDist);
+	int numOfNormMoves = abs(xDist - yDist);
+
+	return DIAGONAL_COST * numOfDiagonals + NORMAL_COST * numOfNormMoves;
 }
 
-PathFinder::GridNode* PathFinder::getShortestPath()
+/// <summary>
+/// Retrace the path from the end node to the start node
+/// </summary>
+/// <param name="endNode">the end node in the grid</param>
+/// <param name="startNode">the starting node in the grid</param>
+/// <returns>the path from the end node to the start node as a vector of nodes
+/// starting with the starting node</returns>
+vector<PathFinder::GridNode*> *PathFinder::retracePath(GridNode *startNode, GridNode *endNode)
 {
+	vector<GridNode*>* path = new vector<GridNode*>();
+	GridNode* currNode = endNode;
+	// traverse the path backwards starting from the end node
+	// and add every node in the path to the path vector
+	while (currNode != startNode)
+	{
+		path->push_back(currNode);
+		currNode = currNode->parentNode;
+	}
+	// reverse the path vector
+	reverse(path->begin(), path->end());
+
+	return path;
+}
+
+/// <summary>
+/// Get the shortest path from the start and end positions
+/// </summary>
+/// <returns>the shortest path from the start and end positions if 
+/// there are start and end positions, otherwise return NULL</returns>
+vector<PathFinder::GridNode *> *PathFinder::getShortestPath()
+{
+	if (startPos == NULL || endPos == NULL)
+	{
+		return NULL;
+	}
+
 	GridNode* startNode = grid->getValueAt(startPos->x, startPos->y);
 	GridNode* endNode = grid->getValueAt(endPos->x, endPos->y);
 
@@ -298,12 +362,12 @@ PathFinder::GridNode* PathFinder::getShortestPath()
 		int pos = 0;
 		for (int i = 1; i < openList.size(); i++)
 		{
-			GridNode* currNode = openList[i];
-			if (currNode->fCost() < lowestCostNode->fCost()
-					|| (currNode->fCost() == lowestCostNode->fCost()
-					&& currNode->hCost <= lowestCostNode->hCost))
+			GridNode* currOpenNode = openList[i];
+			if (currOpenNode->fCost() < lowestCostNode->fCost()
+					|| (currOpenNode->fCost() == lowestCostNode->fCost()
+					&& currOpenNode->hCost <= lowestCostNode->hCost))
 			{
-				lowestCostNode = currNode;
+				lowestCostNode = currOpenNode;
 				pos = i;
 			}
 		}
@@ -314,24 +378,81 @@ PathFinder::GridNode* PathFinder::getShortestPath()
 		// add lowest cost node to closed set
 		closedSet.insert(lowestCostNode);
 
+		// check to see if lowestCostNode is the end node
+		if (lowestCostNode == endNode)
+		{
+			return retracePath(startNode, endNode);
+		}
+
 		Vector2i lowestCostPos = lowestCostNode->gridPos;
 		vector<GridNode*>* neighbours = grid->getNeighbours(lowestCostPos.x, lowestCostPos.y);
 		for (int i = 0; i < neighbours->size(); i++)
 		{
-			GridNode* currNode = (*neighbours)[i];
+			GridNode* currNeighbour = (*neighbours)[i];
 
-			if (currNode->val == GridValue::OCCUPIED
-				|| closedSet.find(currNode) != closedSet.end())
+			if (currNeighbour->val == GridValue::OCCUPIED
+				|| closedSet.find(currNeighbour) != closedSet.end())
 			{
 				// go to next neighbour if this node is either occupied
 				// or is in the closed set
 				continue;
 			}
 
-
+			int newMovementCostToNeighbour =
+				lowestCostNode->gCost + getDistance(lowestCostNode, currNeighbour);
+			// check to see if the new cost is less than the current cost 
+			// or if the current neightbour is not in the open list
+			bool isInOpenSet = find(openList.begin(), openList.end(), currNeighbour) 
+					!= openList.end();
+			if (newMovementCostToNeighbour < currNeighbour->gCost 
+					|| !isInOpenSet)
+			{
+				// set g and h costs of neighbour
+				currNeighbour->gCost = newMovementCostToNeighbour;
+				currNeighbour->hCost = getDistance(currNeighbour, endNode);
+				// set parent of neighbour to the lowestCostNode
+				currNeighbour->parentNode = lowestCostNode;
+				// add neighbour to open list if it is not in it
+				if (!isInOpenSet)
+				{
+					openList.push_back(currNeighbour);
+				}
+			}
 		}
 
 	}
+}
+
+bool PathFinder::drawShortestPath(RenderWindow* window)
+{
+	int cellSize = grid->getCellSize();
+
+	vector<GridNode*> *path = getShortestPath();
+	if (path == NULL)
+	{
+		return false;
+	}
+
+	Color pathColor = Color::Green;
+
+	// draw the path
+	for (int i = 0; i < path->size(); i++)
+	{
+		GridNode *currNode = (*path)[i];
+		Vector2i currPos = currNode->gridPos;
+
+		RectangleShape square(Vector2f(cellSize, cellSize));
+		Vector2f pos = grid->gridToScreen(currPos.x, currPos.y);
+		square.setPosition(pos);
+		square.setOutlineThickness(outlineThickness);
+		square.setFillColor(pathColor);
+		square.setOutlineColor(Color::White);
+
+		window->draw(square);
+	}
+
+	delete(path);
+	return true;
 }
 
 

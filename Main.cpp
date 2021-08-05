@@ -67,6 +67,13 @@ void playerController()
 		// place starting cell
 		pathFinder->setValAt(mousePos, GridValue::START);
 	}
+	else if (Keyboard::isKeyPressed(Keyboard::Key::Tab))
+	{
+		if (!pathFinder->drawShortestPath(window))
+		{
+			cout << "missing start/end" << endl;
+		}
+	}
 }
 
 int main()
