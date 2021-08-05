@@ -1,6 +1,5 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
-#include "Grid.hpp"
 #include "PathFinder.hpp"
 
 using namespace sf;
@@ -107,5 +106,5 @@ int main()
 		window->display();
 	}
 
-	delete(grid);
+	delete(pathFinder);
 }

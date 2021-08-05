@@ -1,12 +1,17 @@
 #ifndef PATH_FINDER_H
 #define PATH_FINDER_H
 
+#include <stdio.h>
 #include "SFML/Graphics.hpp"
 #include "Grid.hpp"
 #include "GridCellStates.hpp"
 
+using namespace std;
 using namespace sf;
 
+/// <summary>
+/// A class for finding the shortest path between two cells in a grid
+/// </summary>
 class PathFinder
 {
 public:
@@ -44,6 +49,9 @@ private:
 
 };
 
+/// <summary>
+/// Initialize the nodes in the grid
+/// </summary>
 void PathFinder::initializeNodes()
 {
 	for (int x = 0; x < grid->getGridWidth(); x++)
