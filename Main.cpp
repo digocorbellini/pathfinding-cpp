@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "Grid.hpp"
+#include "PathFinder.hpp"
 
 using namespace sf;
 
@@ -10,7 +11,8 @@ int windowHeight = 1000;
 int gridSize = 50;
 
 RenderWindow *window;
-Grid *grid;
+PathFinder *pathFinder;
+Grid<PathFinder::GridNode>* grid;
 
 Vector2f selectedGridPos = Vector2f(0, 0);
 
@@ -46,25 +48,25 @@ void playerController()
 		if (Keyboard::isKeyPressed(Keyboard::Key::LShift))
 		{
 			// unoccupy cell
-			grid->setValAt(mousePos, GridValue::UNOCCUPIED);
+			pathFinder->setValAt(mousePos, GridValue::UNOCCUPIED);
 		}
 		else
 		{
 			// occupy cell
-			grid->setValAt(mousePos, GridValue::OCCUPIED);
+			pathFinder->setValAt(mousePos, GridValue::OCCUPIED);
 		}	
 	}
 	else if (Mouse::isButtonPressed(Mouse::Button::Right))
 	{
 		// pressed right mouse button
 		// place destination cell
-		grid->setValAt(mousePos, GridValue::DESTINATION);
+		pathFinder->setValAt(mousePos, GridValue::DESTINATION);
 	}
 	else if (Mouse::isButtonPressed(Mouse::Button::Middle) || Keyboard::isKeyPressed(Keyboard::Key::Space))
 	{
 		// middle mouse button
 		// place starting cell
-		grid->setValAt(mousePos, GridValue::START);
+		pathFinder->setValAt(mousePos, GridValue::START);
 	}
 }
 
@@ -74,7 +76,8 @@ int main()
 	window = new RenderWindow(
 			VideoMode(windowWidth, windowHeight), "Pathfinding");
 	// instantiate grid
-	grid = new Grid(windowWidth / gridSize, windowHeight / gridSize, gridSize);	
+	pathFinder = new PathFinder(windowWidth / gridSize, windowHeight / gridSize, gridSize);	
+	grid = pathFinder->getGrid();
 
 	// insert logic in here
 	while (window->isOpen()) 
@@ -97,7 +100,7 @@ int main()
 		playerController();
 
 		// draw objects
-		grid->drawGrid(window);
+		pathFinder->drawGrid(window);
 		playerCursor();
 
 		// display window

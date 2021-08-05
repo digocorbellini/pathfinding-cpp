@@ -6,8 +6,8 @@
 enum class GridValue
 {
 	INVALID = -1,
-	OCCUPIED,
 	UNOCCUPIED,
+	OCCUPIED,
 	SELECTED,
 	DESTINATION,
 	START

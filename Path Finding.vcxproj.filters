@@ -23,5 +23,8 @@
     <ClInclude Include="GridCellStates.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PathFinder.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

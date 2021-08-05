@@ -9,24 +9,19 @@
 using namespace std;
 using namespace sf;
 
+template <typename T>
 class Grid
 {
 private:
-	GridValue **gridArr; // the grid
+	T ***gridArr; // the grid
 	int gridWidth; // the width of the grid
 	int gridHeight; // the height of the grid
 	int cellSize; // in pixels
-	int outlineThickness; // in pixels
-
-	Vector2i *startPos;
-	Vector2i *destPos;
 
 public:
 	Grid(int width, int height, int cellSize);
 
-	Grid(int width, int height, int cellSize, int outlineThickness);
-
-	GridValue getValueAt(int x, int y);
+	T *getValueAt(int x, int y);
 
 	Vector2f gridToScreen(int x, int y);
 
@@ -34,25 +29,47 @@ public:
 
 	Vector2f centerScreenCoord(Vector2i pos);
 
-	void drawGrid(RenderWindow *window);
+	bool setValAt(int x, int y, T *val);
 
-	bool setValAt(int x, int y, GridValue val);
-
-	bool setValAt(Vector2i pos, GridValue val);
+	bool setValAt(Vector2i pos, T *val);
 
 	int getCellSize();
+
+	int getGridWidth();
+
+	int getGridHeight();
+
+	bool validCoords(int x, int y);
 	
 	~Grid();
-
-private:
-	bool validCoords(int x, int y);
 };
+
+/// <summary>
+/// Get the grid's height
+/// </summary>
+/// <returns>the grid's height</returns>
+template <typename T>
+int Grid<T>::getGridHeight()
+{
+	return gridHeight;
+}
+
+/// <summary>
+/// Get the grid's width
+/// </summary>
+/// <returns>the grid's width</returns>
+template <typename T>
+int Grid<T>::getGridWidth()
+{
+	return gridWidth;
+}
 
 /// <summary>
 /// Get the cell size
 /// </summary>
 /// <returns>the cell size in pixels</returns>
-int Grid::getCellSize()
+template <typename T>
+int Grid<T>::getCellSize()
 {
 	return cellSize;
 }
@@ -64,7 +81,8 @@ int Grid::getCellSize()
 /// <param name="pos">A position on the screen</param>
 /// <returns>the center screen position of the cell closest to the givest 
 /// screen position</returns>
-Vector2f Grid::centerScreenCoord(Vector2i pos)
+template <typename T>
+Vector2f Grid<T>::centerScreenCoord(Vector2i pos)
 {
 	int posX = (int)floor(pos.x / cellSize) * cellSize;
 	int posY = (int)floor(pos.y / cellSize) * cellSize;
@@ -77,50 +95,21 @@ Vector2f Grid::centerScreenCoord(Vector2i pos)
 /// <param name="width">the width of the grid</param>
 /// <param name="height">the height of the grid</param>
 /// <param name="cellSize">the size of each grid square in pixels</param>
-Grid::Grid(int width, int height, int cellSize)
+template <typename T>
+Grid<T>::Grid(int width, int height, int cellSize)
 {
 	this->cellSize = cellSize;
 	// initialize grid
-	gridArr = new GridValue *[width];
-	for (int i = 0; i < width; i++)
+	gridArr = new T **[width];
+	for (int x = 0; x < width; x++)
 	{
-		gridArr[i] = new GridValue[height];
+		gridArr[x] = new T *[height];
 	}
 
 	// initialize instance variables
 	gridWidth = width;
 	gridHeight = height;
 	this->cellSize = cellSize;
-	outlineThickness = 1;
-
-	startPos = NULL;
-	destPos = NULL;
-}
-
-/// <summary>
-/// Create an instance of a grid
-/// </summary>
-/// <param name="width">the width of the grid</param>
-/// <param name="height">the height of the grid</param>
-/// <param name="cellSize">the size of each grid square in pixels</param>
-Grid::Grid(int width, int height, int cellSize, int outlineThickness)
-{
-	this->cellSize = cellSize;
-	// initialize grid
-	gridArr = new GridValue* [width];
-	for (int i = 0; i < width; i++)
-	{
-		gridArr[i] = new GridValue[height];
-	}
-
-	// initialize instance variables
-	gridWidth = width;
-	gridHeight = height;
-	this->cellSize = cellSize;
-	this->outlineThickness = outlineThickness;
-
-	startPos = NULL;
-	destPos = NULL;
 }
 
 /// <summary>
@@ -128,15 +117,17 @@ Grid::Grid(int width, int height, int cellSize, int outlineThickness)
 /// </summary>
 /// <param name="x">the row cooridnate</param>
 /// <param name="y">the column coordinate</param>
-/// <returns>the value at the given grid coordinates</returns>
-GridValue Grid::getValueAt(int x, int y)
+/// <returns>if the coordinates are valid, returns the value at the given grid 
+/// coordinates, and returns false otherwise</returns>
+template <typename T>
+T *Grid<T>::getValueAt(int x, int y)
 {
 	if (x < gridWidth && y < gridHeight)
 	{
 		return gridArr[x][y];
 	}
 
-	return GridValue::INVALID;
+	return NULL;
 }
 
 /// <summary>
@@ -146,7 +137,8 @@ GridValue Grid::getValueAt(int x, int y)
 /// <param name="y">the y coordinate of the dedired grid space</param>
 /// <returns>a screen position in pixels as a Vector2f of the given cell
 /// in the grid if the given coordinates are valid, otherwise returns NULL</returns>
-Vector2f Grid::gridToScreen(int x, int y)
+template <typename T>
+Vector2f Grid<T>::gridToScreen(int x, int y)
 {
 	float screenX = x * cellSize;
 	float screenY = y * cellSize;
@@ -154,7 +146,14 @@ Vector2f Grid::gridToScreen(int x, int y)
 	return Vector2f(screenX, screenY);
 }
 
-Vector2i Grid::screenToGrid(Vector2i pos)
+
+/// <summary>
+/// Convert the given screen position to a grid position
+/// </summary>
+/// <param name="pos">The screen position to be converted</param>
+/// <returns>The screen position as a grid position</returns>
+template <typename T>
+Vector2i Grid<T>::screenToGrid(Vector2i pos)
 {
 	int xPos = (int)floor(pos.x / cellSize);
 	int yPos = (int)floor(pos.y / cellSize);
@@ -167,33 +166,10 @@ Vector2i Grid::screenToGrid(Vector2i pos)
 /// <param name="x">the x coordinate of the desired cell</param>
 /// <param name="y"the y coordinate of the desired cell></param>
 /// <returns>true if the cell is valid and false otherwise</returns>
-bool Grid::validCoords(int x, int y)
+template <typename T>
+bool Grid<T>::validCoords(int x, int y)
 {
 	return (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight);
-}
-
-/// <summary>
-/// Draws this grid in the given window
-/// </summary>
-/// <param name="window">window to draw into</param>
-void Grid::drawGrid(RenderWindow *window)
-{
-	for (int x = 0; x < gridWidth; x++)
-	{
-		for (int y = 0; y < gridHeight; y++)
-		{
-			RectangleShape cell = RectangleShape(Vector2f(cellSize, cellSize));
-			Vector2f pos = gridToScreen(x, y);
-			cell.setPosition(pos);
-			cell.setOutlineThickness(outlineThickness);
-
-			GridStateColor color = valToColor(gridArr[x][y]);
-			cell.setFillColor(Color((unsigned long)color));
-			cell.setOutlineColor(Color::White);
-
-			window->draw(cell);
-		}
-	}
 }
 
 /// <summary>
@@ -203,63 +179,11 @@ void Grid::drawGrid(RenderWindow *window)
 /// <param name="y">the y coordinate of the cell</param>
 /// <param name="val">the new value of the given cell</param>
 /// <returns>true if the cell is valid and false otherwise</returns>
-bool Grid::setValAt(int x, int y, GridValue val)
+template <typename T>
+bool Grid<T>::setValAt(int x, int y, T *val)
 {
 	if (validCoords(x, y))
 	{
-		// only allow one start and dest cell
-		if (val == GridValue::START)
-		{
-			// set old start to unoccupied
-			if (startPos == NULL)
-			{
-				startPos = new Vector2i(x, y);
-			}
-			else
-			{
-				// unoccupy old start pos
-				gridArr[startPos->x][startPos->y] = GridValue::UNOCCUPIED;
-
-				// set new start pos
-				startPos->x = x;
-				startPos->y = y;
-			}
-		}
-		else if (val == GridValue::DESTINATION)
-		{
-			// set old dest to unoccupied
-			if (destPos == NULL)
-			{
-				destPos = new Vector2i(x, y);
-			}
-			else
-			{
-				// unoccupy old dest pos
-				gridArr[destPos->x][destPos->y] = GridValue::UNOCCUPIED;
-
-				// set new dest pos
-				destPos->x = x;
-				destPos->y = y;
-			}
-		}
-		else
-		{
-			// make sure that dest/start are removed if the cell is overwritten 
-			GridValue currVal = getValueAt(x, y);
-			if (startPos != NULL && currVal == GridValue::START)
-			{
-				// remove start pos
-				delete(startPos);
-				startPos = NULL;
-			}
-			else if (destPos != NULL && currVal == GridValue::DESTINATION)
-			{
-				// remove destination pos
-				delete(destPos);
-				destPos = NULL;
-			}
-		}
-
 		// set the value at the cell
 		gridArr[x][y] = val;
 
@@ -276,7 +200,8 @@ bool Grid::setValAt(int x, int y, GridValue val)
 /// <param name="pos">the screen position of the cell</param>
 /// <param name="val">the new value of the cell</param>
 /// <returns>true if the cell is valid and false otherwise</returns>
-bool Grid::setValAt(Vector2i pos, GridValue val)
+template <typename T>
+bool Grid<T>::setValAt(Vector2i pos, T *val)
 {
 	Vector2i gridCoords(screenToGrid(pos));
 	return setValAt(gridCoords.x, gridCoords.y, val);
@@ -285,28 +210,16 @@ bool Grid::setValAt(Vector2i pos, GridValue val)
 /// <summary>
 /// Destructor for a grid object
 /// </summary>
-Grid::~Grid()
+template <typename T>
+Grid<T>::~Grid()
 {
-	cout << "startPos == null: " << (startPos == NULL) << endl;
-	cout << "destPos == null: " << (destPos == NULL) << endl;
-
 	// free the grid array
-	for (int i = 0; i < gridWidth; i++)
+	for (int x = 0; x < gridWidth; x++)
 	{
-		delete gridArr[i];
+		delete gridArr[x];
 	}
 
 	delete gridArr;
-
-	// free the start and dest positions
-	if (startPos != NULL)
-	{
-		delete(startPos);
-	}
-	if (destPos != NULL)
-	{
-		delete(destPos);
-	}
 }
 
 #endif
