@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "PathFinder.hpp"
+#include "Button.hpp"
 
 using namespace sf;
 
