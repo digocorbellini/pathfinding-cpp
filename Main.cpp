@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "PathFinder.hpp"
 #include "Button.hpp"
+#include <Windows.h>
 
 using namespace sf;
 
@@ -131,9 +132,12 @@ void drawUI()
 
 int main()
 {
+	// hide console window
+	::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+
 	// make the window
 	window = new RenderWindow(
-			VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT + EXTRA_UI_HEIGHT), "Pathfinding");
+			VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT + EXTRA_UI_HEIGHT), "Pathfinding", Style::Close);
 	// instantiate grid
 	pathFinder = new PathFinder(WINDOW_WIDTH / GRID_SIZE, WINDOW_HEIGHT / GRID_SIZE, GRID_SIZE);	
 	grid = pathFinder->getGrid();
