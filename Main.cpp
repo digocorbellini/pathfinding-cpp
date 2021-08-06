@@ -18,6 +18,11 @@ bool includeDiagonals = true;
 
 Vector2f selectedGridPos = Vector2f(0, 0);
 
+// buttons
+const int NUM_OF_BUTTONS = 4;
+Button* pathButton;
+Button* diagonalToggleBtn;
+
 /// <summary>
 /// Handle the logic for the player cursor on the grid
 /// </summary>
@@ -97,38 +102,31 @@ bool isShapePressed(RectangleShape shape)
 	return false;
 }
 
-void drawUI()
+void UILogic()
 {
-	// draw button to start shortest path
-	// draw button to turn on and off diagonal search
-	const int NUM_OF_BUTTONS = 4;
-
-	// size of all buttons
-	Vector2f buttonSize(windowWidth / NUM_OF_BUTTONS, extraUIHeight);
-	// the leftmost position for UI buttons
-	Vector2f btnPosLeft = grid->gridToScreen(0, grid->getGridHeight());
-
-	RectangleShape pathFindingButton(buttonSize);
-	pathFindingButton.setFillColor(Color::Cyan);
-	pathFindingButton.setPosition(btnPosLeft);
-	window->draw(pathFindingButton);
-
-	if (isShapePressed(pathFindingButton))
+	// check to see if path buton is being pressed
+	if (pathButton->isButtonPressed(window))
 	{
+		// draw shortest path if the button is being pressed
 		pathFinder->drawShortestPath(window, includeDiagonals);
 	}
 
-	RectangleShape diagonalToggle(buttonSize);
-	Color diagonalToggleColor = (includeDiagonals) ? Color::Green : Color::Red;
-	diagonalToggle.setFillColor(diagonalToggleColor);
-	diagonalToggle.setPosition(btnPosLeft + Vector2f(buttonSize.x, 0));
-	window->draw(diagonalToggle);
-
-	if (isShapePressed(diagonalToggle))
+	// check to see if the diagonal toggle button is being pressed
+	if (diagonalToggleBtn->isButtonPressedDown(window))
 	{
+		// flip the bool for including diagonals and change the button
+		// fill color accordingly
 		includeDiagonals = !includeDiagonals;
+		Color btnColor = (includeDiagonals) ? Color::Green : Color::Red;
+		diagonalToggleBtn->setFillColor(btnColor);
 	}
+}
 
+void drawUI()
+{
+	// draw all buttons
+	pathButton->drawButton(window);
+	diagonalToggleBtn->drawButton(window);
 }
 
 int main()
@@ -139,6 +137,21 @@ int main()
 	// instantiate grid
 	pathFinder = new PathFinder(windowWidth / gridSize, windowHeight / gridSize, gridSize);	
 	grid = pathFinder->getGrid();
+
+	// make buttons
+	// size of all buttons
+	Vector2f buttonSize(windowWidth / NUM_OF_BUTTONS, extraUIHeight);
+	// the leftmost position for UI buttons
+	Vector2f btnPosLeft = grid->gridToScreen(0, grid->getGridHeight());
+
+	RectangleShape pathBtnShape(buttonSize);
+	pathButton = new Button(&pathBtnShape, Color::Cyan);
+	pathButton->setPosition(btnPosLeft);
+
+	RectangleShape diagonalToggle(buttonSize);
+	diagonalToggleBtn = new Button(&diagonalToggle);
+	diagonalToggleBtn->setPosition(btnPosLeft + Vector2f(buttonSize.x, 0));
+	diagonalToggleBtn->setFillColor(Color::Green);
 
 	// insert logic in here
 	while (window->isOpen()) 
@@ -159,11 +172,12 @@ int main()
 
 		// logic
 		playerController();
+		UILogic();
 
 		// draw objects
-		drawUI();
 		pathFinder->drawGrid(window);
 		playerCursor();
+		drawUI();
 
 		// display window
 		window->display();
