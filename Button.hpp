@@ -9,7 +9,10 @@ class Button
 {
 private:
 	Shape *btnShape;
+	Color originalColor;
 	bool isPressed;
+	bool pressDarkening;
+	float darkenFactor;
 
 public:
 	Button(Shape *buttonShape);
@@ -20,6 +23,12 @@ public:
 
 	void setFillColor(Color color);
 
+	Color getFillColor();
+
+	void setPressDarkening(bool doesDarken);
+
+	void setDarkenFactor(float factor);
+
 	bool isButtonPressedDown(RenderWindow *window);
 
 	bool isButtonPressedUP(RenderWindow* window);
@@ -27,6 +36,11 @@ public:
 	bool isButtonPressed(RenderWindow* window);
 
 	void drawButton(RenderWindow* window);
+
+private:
+	void darkenButton();
+
+	void undarkenButton();
 };
 
 /// <summary>
@@ -36,7 +50,10 @@ public:
 Button::Button(Shape* buttonShape)
 {
 	btnShape = buttonShape;
+	originalColor = buttonShape->getFillColor();
 	isPressed = false;
+	pressDarkening = true;
+	darkenFactor = .75;
 }
 
 /// <summary>
@@ -48,6 +65,9 @@ Button::Button(Shape* buttonShape, Color fillColor)
 {
 	btnShape = buttonShape;
 	btnShape->setFillColor(fillColor);
+	originalColor = fillColor;
+	pressDarkening = true;
+	darkenFactor = .75;
 }
 
 /// <summary>
@@ -69,6 +89,54 @@ void Button::setFillColor(Color color)
 }
 
 /// <summary>
+/// Get the fill color of the button
+/// </summary>
+/// <returns>the fill color of the button</returns>
+Color Button::getFillColor()
+{
+	return btnShape->getFillColor();
+}
+
+/// <summary>
+/// Set whether the button darkens when pressed
+/// </summary>
+/// <param name="doesDarken">whether the button darkens or not</param>
+void Button::setPressDarkening(bool doesDarken)
+{
+	pressDarkening = doesDarken;
+}
+
+/// <summary>
+/// Set the factor of darkening 
+/// </summary>
+/// <param name="factor">the factor of darkening</param>
+void Button::setDarkenFactor(float factor)
+{
+	darkenFactor = factor;
+}
+
+/// <summary>
+/// darken the button 
+/// </summary>
+void Button::darkenButton()
+{
+	Color currColor = btnShape->getFillColor();
+	currColor.r *= darkenFactor;
+	currColor.g *= darkenFactor;
+	currColor.b *= darkenFactor; 
+
+	btnShape->setFillColor(currColor);
+}
+
+/// <summary>
+/// set button color back to its original color
+/// </summary>
+void Button::undarkenButton()
+{
+	btnShape->setFillColor(originalColor);
+}
+
+/// <summary>
 /// See if this button has been pressed down
 /// </summary>
 /// <param name="window">the window in which this button is in</param>
@@ -83,6 +151,8 @@ bool Button::isButtonPressedDown(RenderWindow* window)
 			&& !isPressed)
 	{
 		isPressed = true;
+		if(pressDarkening)
+			darkenButton();
 		return true;
 	}
 	isButtonPressed(window);
@@ -104,6 +174,8 @@ bool Button::isButtonPressedUP(RenderWindow* window)
 			&& isPressed)
 	{
 		isPressed = false;
+		if(pressDarkening)
+			undarkenButton();
 		return true;
 	}
 	isButtonPressed(window);
@@ -123,10 +195,14 @@ bool Button::isButtonPressed(RenderWindow* window)
 	if (Mouse::isButtonPressed(Mouse::Button::Left) 
 			&& btnShape->getGlobalBounds().contains(mouseWorldPos))
 	{
+		if(!isPressed && pressDarkening)
+			darkenButton();
 		isPressed = true;
 		return true;
 	}
 	isPressed = false;
+	if(pressDarkening)
+		undarkenButton();
 	return false;
 }
 

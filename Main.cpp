@@ -19,7 +19,7 @@ bool includeDiagonals = true;
 Vector2f selectedGridPos = Vector2f(0, 0);
 
 // buttons
-const int NUM_OF_BUTTONS = 4;
+const int NUM_OF_BUTTONS = 2;
 Button* pathButton;
 Button* diagonalToggleBtn;
 
@@ -152,6 +152,7 @@ int main()
 	diagonalToggleBtn = new Button(&diagonalToggle);
 	diagonalToggleBtn->setPosition(btnPosLeft + Vector2f(buttonSize.x, 0));
 	diagonalToggleBtn->setFillColor(Color::Green);
+	diagonalToggleBtn->setPressDarkening(false);
 
 	// insert logic in here
 	while (window->isOpen()) 
@@ -173,7 +174,7 @@ int main()
 		// logic
 		playerController();
 		UILogic();
-
+		
 		// draw objects
 		pathFinder->drawGrid(window);
 		playerCursor();
@@ -184,4 +185,7 @@ int main()
 	}
 
 	delete(pathFinder);
+	delete(window);
+	delete(pathButton);
+	delete(diagonalToggleBtn);
 }
