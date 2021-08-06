@@ -79,9 +79,9 @@ public:
 
 	bool setValAt(Vector2i pos, GridValue val);
 
-	vector<GridNode *> *getShortestPath();
+	vector<GridNode *> *getShortestPath(bool includeDiagonals);
 
-	bool drawShortestPath(RenderWindow* window);
+	bool drawShortestPath(RenderWindow* window, bool includeDiagonals);
 
 private:
 	void initializeNodes();
@@ -340,19 +340,23 @@ vector<PathFinder::GridNode*> *PathFinder::retracePath(GridNode *startNode, Grid
 /// </summary>
 /// <returns>the shortest path from the start and end positions if 
 /// there are start and end positions, otherwise return NULL</returns>
-vector<PathFinder::GridNode *> *PathFinder::getShortestPath()
+vector<PathFinder::GridNode *> *PathFinder::getShortestPath(bool includeDiagonals)
 {
+	// only find shortest path if a start and end exist
 	if (startPos == NULL || endPos == NULL)
 	{
 		return NULL;
 	}
-
+	// get the start and end nodes
 	GridNode* startNode = grid->getValueAt(startPos->x, startPos->y);
 	GridNode* endNode = grid->getValueAt(endPos->x, endPos->y);
 
-	vector<GridNode*> openList;
+	// list holds the nodes that CAN be part of the path
+	vector<GridNode*> openList; 
+	// set holds the nodes that HAVE been picked for a path
 	unordered_set<GridNode*, NodeHash> closedSet;
 
+	// openList starts with the start node
 	openList.push_back(startNode);
 
 	while (openList.size() > 0)
@@ -373,6 +377,7 @@ vector<PathFinder::GridNode *> *PathFinder::getShortestPath()
 		}
 
 		// remove lowest cost node from open list
+		// because we are going to consider it as part of a path
 		vector<GridNode*>::iterator it = openList.begin() + pos;
 		openList.erase(it);
 		// add lowest cost node to closed set
@@ -384,26 +389,28 @@ vector<PathFinder::GridNode *> *PathFinder::getShortestPath()
 			return retracePath(startNode, endNode);
 		}
 
+		// update all neighbour nodes
 		Vector2i lowestCostPos = lowestCostNode->gridPos;
-		vector<GridNode*>* neighbours = grid->getNeighbours(lowestCostPos.x, lowestCostPos.y);
+		vector<GridNode*>* neighbours = grid->getNeighbours(lowestCostPos.x, lowestCostPos.y, includeDiagonals);
 		for (int i = 0; i < neighbours->size(); i++)
 		{
 			GridNode* currNeighbour = (*neighbours)[i];
-
+			// if the neighbour is occupied (so can't be moved to) or it
+			// is already considered as part of the path (is in closed set)
+			// then ignore it and move onto the next neighbour
 			if (currNeighbour->val == GridValue::OCCUPIED
 				|| closedSet.find(currNeighbour) != closedSet.end())
 			{
-				// go to next neighbour if this node is either occupied
-				// or is in the closed set
 				continue;
 			}
 
 			int newMovementCostToNeighbour =
 				lowestCostNode->gCost + getDistance(lowestCostNode, currNeighbour);
-			// check to see if the new cost is less than the current cost 
-			// or if the current neightbour is not in the open list
 			bool isInOpenSet = find(openList.begin(), openList.end(), currNeighbour) 
 					!= openList.end();
+			// if the neighbour's current cost is greater than the new cost
+			// (aka part of a longer path) or the neighbour has not been 
+			// considered for a path yet, then update its values
 			if (newMovementCostToNeighbour < currNeighbour->gCost 
 					|| !isInOpenSet)
 			{
@@ -413,6 +420,7 @@ vector<PathFinder::GridNode *> *PathFinder::getShortestPath()
 				// set parent of neighbour to the lowestCostNode
 				currNeighbour->parentNode = lowestCostNode;
 				// add neighbour to open list if it is not in it
+				// (aka has not been considered for a path yet)
 				if (!isInOpenSet)
 				{
 					openList.push_back(currNeighbour);
@@ -423,11 +431,11 @@ vector<PathFinder::GridNode *> *PathFinder::getShortestPath()
 	}
 }
 
-bool PathFinder::drawShortestPath(RenderWindow* window)
+bool PathFinder::drawShortestPath(RenderWindow* window, bool includeDiagonals)
 {
 	int cellSize = grid->getCellSize();
 
-	vector<GridNode*> *path = getShortestPath();
+	vector<GridNode*> *path = getShortestPath(includeDiagonals);
 	if (path == NULL)
 	{
 		return false;

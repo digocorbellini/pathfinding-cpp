@@ -7,7 +7,7 @@ using namespace sf;
 // kinda wack to hardcode these values but whatever
 int windowWidth = 1000;
 int windowHeight = 1000;
-int gridSize = 50;
+int gridSize = 25;
 
 RenderWindow *window;
 PathFinder *pathFinder;
@@ -69,7 +69,7 @@ void playerController()
 	}
 	else if (Keyboard::isKeyPressed(Keyboard::Key::Tab))
 	{
-		if (!pathFinder->drawShortestPath(window))
+		if (!pathFinder->drawShortestPath(window, false))
 		{
 			cout << "missing start/end" << endl;
 		}

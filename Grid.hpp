@@ -42,7 +42,7 @@ public:
 
 	bool validCoords(int x, int y);
 
-	vector<T*> *getNeighbours(int x, int y);
+	vector<T*> *getNeighbours(int x, int y, bool includeDiagonals);
 	
 	~Grid();
 };
@@ -56,7 +56,7 @@ public:
 /// <returns>a list of all of the neighbouring cells around the given
 /// grid coordinates if the coordinates are valid and null otherwise</returns>
 template <typename T>
-vector<T*> *Grid<T>::getNeighbours(int x, int y)
+vector<T*> *Grid<T>::getNeighbours(int x, int y, bool includeDiagonals)
 {
 	// check for invalid coords
 	if (!validCoords(x, y))
@@ -73,9 +73,21 @@ vector<T*> *Grid<T>::getNeighbours(int x, int y)
 		for (int relativeY = -1; relativeY < 2; relativeY++)
 		{
 			// skip the center cell
-			if (x == 0 && y == 0)
+			if (relativeX == 0 && relativeY == 0)
 			{
 				continue;
+			}
+
+			// skip diagonals if needed
+			if (includeDiagonals)
+			{
+				if ((relativeX == -1 && relativeY == -1)
+					|| (relativeX == -1 && relativeY == 1)
+					|| (relativeX == 1 && relativeY == -1)
+					|| (relativeX == 1 && relativeY == 1))
+				{
+					continue;
+				}
 			}
 
 			int currX = x + relativeX;
