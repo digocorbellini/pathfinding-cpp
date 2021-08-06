@@ -6,10 +6,10 @@
 using namespace sf;
 
 // kinda wack to hardcode these values but whatever
-int windowWidth = 1000;
-int windowHeight = 1000;
-int extraUIHeight = 100;
-int gridSize = 25;
+const int WINDOW_WIDTH = 1000;
+const int WINDOW_HEIGHT = 1000;
+const int EXTRA_UI_HEIGHT = 100;
+const int GRID_SIZE = 25;
 
 RenderWindow *window;
 PathFinder *pathFinder;
@@ -133,14 +133,14 @@ int main()
 {
 	// make the window
 	window = new RenderWindow(
-			VideoMode(windowWidth, windowHeight + extraUIHeight), "Pathfinding");
+			VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT + EXTRA_UI_HEIGHT), "Pathfinding");
 	// instantiate grid
-	pathFinder = new PathFinder(windowWidth / gridSize, windowHeight / gridSize, gridSize);	
+	pathFinder = new PathFinder(WINDOW_WIDTH / GRID_SIZE, WINDOW_HEIGHT / GRID_SIZE, GRID_SIZE);	
 	grid = pathFinder->getGrid();
 
 	// make buttons
 	// size of all buttons
-	Vector2f buttonSize(windowWidth / NUM_OF_BUTTONS, extraUIHeight);
+	Vector2f buttonSize(WINDOW_WIDTH / NUM_OF_BUTTONS, EXTRA_UI_HEIGHT);
 	// the leftmost position for UI buttons
 	Vector2f btnPosLeft = grid->gridToScreen(0, grid->getGridHeight());
 
