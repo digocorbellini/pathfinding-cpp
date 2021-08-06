@@ -7,11 +7,13 @@ using namespace sf;
 // kinda wack to hardcode these values but whatever
 int windowWidth = 1000;
 int windowHeight = 1000;
+int extraUIHeight = 100;
 int gridSize = 25;
 
 RenderWindow *window;
 PathFinder *pathFinder;
 Grid<PathFinder::GridNode>* grid;
+bool includeDiagonals = true;
 
 Vector2f selectedGridPos = Vector2f(0, 0);
 
@@ -24,12 +26,16 @@ void playerCursor()
 	Vector2i mousePos = Mouse::getPosition(*window);
 
 	// set selected cell
-	selectedGridPos = grid->centerScreenCoord(mousePos);
-	Vector2f cellSize(grid->getCellSize(), grid->getCellSize());
-	RectangleShape selectedSquare(cellSize);
-	selectedSquare.setFillColor(Color((unsigned long)valToColor(GridValue::SELECTED)));
-	selectedSquare.setPosition(selectedGridPos);
-	window->draw(selectedSquare);
+	Vector2i gridPos = grid->screenToGrid(mousePos);
+	if (grid->validCoords(gridPos.x, gridPos.y))
+	{
+		selectedGridPos = grid->centerScreenCoord(mousePos);
+		Vector2f cellSize(grid->getCellSize(), grid->getCellSize());
+		RectangleShape selectedSquare(cellSize);
+		selectedSquare.setFillColor(Color((unsigned long)valToColor(GridValue::SELECTED)));
+		selectedSquare.setPosition(selectedGridPos);
+		window->draw(selectedSquare);
+	}	
 }
 
 /// <summary>
@@ -69,18 +75,66 @@ void playerController()
 	}
 	else if (Keyboard::isKeyPressed(Keyboard::Key::Tab))
 	{
-		if (!pathFinder->drawShortestPath(window, false))
+		if (!pathFinder->drawShortestPath(window, includeDiagonals))
 		{
 			cout << "missing start/end" << endl;
 		}
 	}
 }
 
+bool isShapePressed(RectangleShape shape)
+{
+	if(Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		Vector2i mousePos = Mouse::getPosition(*window);
+		Vector2f mouseWorldPos(mousePos);
+		if (shape.getGlobalBounds().contains(mouseWorldPos))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void drawUI()
+{
+	// draw button to start shortest path
+	// draw button to turn on and off diagonal search
+	const int NUM_OF_BUTTONS = 4;
+
+	// size of all buttons
+	Vector2f buttonSize(windowWidth / NUM_OF_BUTTONS, extraUIHeight);
+	// the leftmost position for UI buttons
+	Vector2f btnPosLeft = grid->gridToScreen(0, grid->getGridHeight());
+
+	RectangleShape pathFindingButton(buttonSize);
+	pathFindingButton.setFillColor(Color::Cyan);
+	pathFindingButton.setPosition(btnPosLeft);
+	window->draw(pathFindingButton);
+
+	if (isShapePressed(pathFindingButton))
+	{
+		pathFinder->drawShortestPath(window, includeDiagonals);
+	}
+
+	RectangleShape diagonalToggle(buttonSize);
+	Color diagonalToggleColor = (includeDiagonals) ? Color::Green : Color::Red;
+	diagonalToggle.setFillColor(diagonalToggleColor);
+	diagonalToggle.setPosition(btnPosLeft + Vector2f(buttonSize.x, 0));
+	window->draw(diagonalToggle);
+
+	if (isShapePressed(diagonalToggle))
+	{
+		includeDiagonals = !includeDiagonals;
+	}
+
+}
+
 int main()
 {
 	// make the window
 	window = new RenderWindow(
-			VideoMode(windowWidth, windowHeight), "Pathfinding");
+			VideoMode(windowWidth, windowHeight + extraUIHeight), "Pathfinding");
 	// instantiate grid
 	pathFinder = new PathFinder(windowWidth / gridSize, windowHeight / gridSize, gridSize);	
 	grid = pathFinder->getGrid();
@@ -106,6 +160,7 @@ int main()
 		playerController();
 
 		// draw objects
+		drawUI();
 		pathFinder->drawGrid(window);
 		playerCursor();
 

@@ -79,7 +79,7 @@ vector<T*> *Grid<T>::getNeighbours(int x, int y, bool includeDiagonals)
 			}
 
 			// skip diagonals if needed
-			if (includeDiagonals)
+			if (!includeDiagonals)
 			{
 				if ((relativeX == -1 && relativeY == -1)
 					|| (relativeX == -1 && relativeY == 1)
