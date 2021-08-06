@@ -1,6 +1,9 @@
 # pathfinding-cpp
 Learning CPP and SFML by implementing the A* pathfinding algorithm and visualizing it.
 
+## Instructions:
+Run the executable in the "A star pathfinding" folder
+
 ## Controls:
 - **Left mouse button** - draw obstacles on the grid
 - **Right mouse button** - place the starting position
